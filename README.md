@@ -1,84 +1,54 @@
 # Concurrent Reservation Service
-
-## CEN4025 — Assignment 7: Load Testing and Scalability
-
+## CEN4025 - Assignment 7: Load Testing and Scalability
 ### Project Overview
 
-The Concurrent Reservation Service is a Java Spring Boot application originally developed for the CEN4025 midterm project and reused for Assignment 7 to evaluate application performance under increasing HTTP request workloads.
+The Concurrent Reservation Service is a Java Spring Boot REST API that manages appointment availability and reservations.
 
-The application provides appointment availability and reservation management through an HTTP REST API. It also includes a TCP server for reservation operations.
+Assignment 7 evaluates the application's performance, scalability, and correctness under concurrent HTTP workloads.
 
-Assignment 7 focuses on measuring response times, evaluating concurrent request handling, identifying scalability limitations, and documenting performance improvements.
+The project includes:
 
-### Technologies Used
+- Sequential baseline testing
+- Concurrent load testing
+- Throughput and scalability measurements
+- Application resource monitoring
+- Performance limitation investigation
+- Availability retrieval optimization
+- Post-optimization testing
+- Automated and functional verification
 
-- Java 26
+The repository contains the application source code, automated tests, and PowerShell scripts used to reproduce the testing.
 
-- Spring Boot
+---
 
-- Apache Maven
+## 1. Technologies and Environment
 
-- JUnit 5
+| Component | Configuration |
+|---|---|
+| Programming Language | Java 26.0.2 |
+| Framework | Spring Boot 4.1.1 |
+| Build Tool | Maven Wrapper 3.9.16 |
+| IDE | IntelliJ IDEA |
+| Operating System | Windows 11, 64-bit |
+| System Memory | Approximately 31.7 GiB |
+| Testing Shell | Windows PowerShell 5.1 |
+| HTTP Clients | Invoke-RestMethod and .NET HttpClient |
+| Application Port | 8080 |
+| Tested Endpoint | GET /api/appointments |
 
-- Windows PowerShell 5.1
+All tests were executed locally against the Spring Boot application running on localhost.
 
-- IntelliJ IDEA
+---
 
-- Git and GitHub
+## 2. Build and Run Instructions
 
-### Application Architecture
+### Prerequisites
 
-The application includes:
+A compatible Java Development Kit must be installed and configured.
 
-- **ReservationController:** Exposes HTTP REST endpoints.
+The repository includes Maven Wrapper, so a separate Maven installation is not required.
 
-- **ReservationService:** Implements reservation business logic and manages shared reservation state.
-
-- **ReservationStore:** Provides an abstraction for reservation persistence.
-
-- **JsonReservationStore / CsvReservationStore:** Support alternative persistence formats.
-
-- **TCP Server:** Handles reservation requests through a TCP interface.
-
-- **AsyncAuditService:** Supports asynchronous audit logging.
-
-- **JUnit Tests:** Verify reservation functionality and concurrency behavior.
-
-The HTTP API and TCP server use the same reservation service.
-
-### HTTP API Endpoints
-
-| Method | Endpoint | Description |
-
-|---|---|---|
-
-| GET | `/api/appointments` | Retrieve available appointment slots |
-
-| POST | `/api/reservations` | Create a reservation |
-
-| GET | `/api/reservations/{id}` | Retrieve a reservation by ID |
-
-| DELETE | `/api/reservations/{id}` | Cancel a reservation |
-
-The load tests currently target the read-only endpoint:
-
-`http://localhost:8080/api/appointments`
-
-Using a read-only endpoint allows repeated requests without consuming appointment slots or modifying reservation data.
-
-### Running the Application
-
-#### Prerequisites
-
-- Compatible Java Development Kit
-
-- Maven Wrapper
-
-- Windows PowerShell
-
-- IntelliJ IDEA or another Java IDE
-
-#### Build and Test
+### Run Automated Tests
 
 From the project root:
 
@@ -88,17 +58,29 @@ From the project root:
 
 ```
 
-#### Start the Application
+Expected final test results:
 
-Run the Spring Boot application class in IntelliJ IDEA.
+```text
 
-The application starts:
+Tests run: 13, Failures: 0, Errors: 0, Skipped: 0
 
-- HTTP server on port `8080`
+BUILD SUCCESS
 
-- TCP server on port `9090`
+```
 
-#### Verify the HTTP Endpoint
+### Start the Application
+
+```powershell
+
+.\mvnw.cmd spring-boot:run
+
+```
+
+Wait for Spring Boot to start successfully and for embedded Tomcat to initialize on port 8080.
+
+### Verify the API
+
+Open another PowerShell terminal:
 
 ```powershell
 
@@ -106,283 +88,315 @@ Invoke-RestMethod -Uri "http://localhost:8080/api/appointments" -Method Get
 
 ```
 
-A successful response returns the available appointment slots.
+The final verification returned four appointment slots:
+
+- SLOT-001
+
+- SLOT-002
+
+- SLOT-003
+
+- SLOT-004
 
 ---
 
-## Performance and Load Testing
+## 3. Load Testing Scripts
 
-### Testing Objective
+The `scripts` directory contains the PowerShell scripts used during the assignment.
 
-The objective of Assignment 7 is to evaluate how the Concurrent Reservation Service responds to increasing HTTP request demand.
+Start the Spring Boot application before running these scripts.
 
-The tests measure:
+Execute all commands from the repository root.
 
-- Total HTTP requests
-
-- Successful requests
-
-- Failed requests
-
-- Average response time
-
-- Minimum response time
-
-- Maximum response time
-
-- Error rate
-
-Additional workload levels will be used to investigate scalability and identify performance limitations.
-
-### Testing Environment
-
-| Component | Configuration |
-
-|---|---|
-
-| Operating system | Windows, 64-bit |
-
-| Java | OpenJDK 26.0.2 |
-
-| Maven | Apache Maven 3.9.16 |
-
-| Development environment | IntelliJ IDEA |
-
-| Load generator | Windows PowerShell 5.1 |
-
-| Application host | Local machine |
-
-| HTTP port | 8080 |
-
-| Tested endpoint | `GET /api/appointments` |
-
-| Network | Localhost |
-
-The load generator and Spring Boot application run on the same computer.
-
-This eliminates external network latency but means both processes share local CPU and memory resources.
-
-### Test Script Directory
-
-The project contains a `scripts` directory with PowerShell files used to reproduce the performance tests.
-
-```text
-
-07-load-testing-and-scalability/
-
-├── scripts/
-
-│   ├── baseline.ps1
-
-│   └── low-load.ps1
-
-├── src/
-
-│   ├── main/
-
-│   └── test/
-
-├── pom.xml
-
-├── mvnw
-
-├── mvnw.cmd
-
-└── README.md
-
-```
-
-### Test 1 — Sequential Baseline
-
-**Script:** `scripts/baseline.ps1`
-
-**Purpose:** Establish application response times under a low-demand workload.
-
-**Workload:**
-
-- 20 HTTP GET requests
-
-- Requests executed sequentially
-
-- No intentional concurrent clients
-
-Run:
+### Medium Load Test
 
 ```powershell
 
-.\scripts\baseline.ps1
+.\scripts\medium-load.ps1
 
 ```
 
-#### Recorded Baseline Results
+Runs 20 background jobs with 2 requests per job.
+
+Total: 40 requests.
+
+### High Load Test
+
+```powershell
+
+.\scripts\high-load.ps1
+
+```
+
+Runs 20 background jobs with 5 requests per job.
+
+Total: 100 requests.
+
+### Concurrent Correctness Validation
+
+```powershell
+
+.\scripts\validate-load.ps1
+
+```
+
+Runs 20 background jobs with 2 requests per job.
+
+Validates the appointment responses returned by the application.
+
+Total: 40 requests.
+
+### Throughput Test
+
+```powershell
+
+.\scripts\throughput-test.ps1
+
+```
+
+Measures request throughput using different numbers of PowerShell background jobs.
+
+### Lightweight Scalability Test
+
+```powershell
+
+.\scripts\scalability-test.ps1
+
+```
+
+Measures throughput at concurrency levels of 1, 5, and 20.
+
+Each configuration executes 100 HTTP GET requests using asynchronous .NET HTTP operations.
+
+### Repeat Scalability Test Three Times
+
+```powershell
+
+1..3 | ForEach-Object {
+
+    Write-Host "`n=== REPEAT TEST $_ ==="
+
+    .\scripts\scalability-test.ps1
+
+}
+
+```
+
+This repeats the benchmark to evaluate measurement variability.
+
+---
+
+## 4. Sequential Baseline Results
+
+The initial baseline executed 20 sequential HTTP GET requests.
 
 | Metric | Result |
-
 |---|---:|
+| Total Requests | 20 |
+| Successful Requests | 20 |
+| Average Response Time | 99.484 ms |
+| Minimum Response Time | 64.37 ms |
+| Maximum Response Time | 188.28 ms |
+| Error Rate | 0% |
 
-| Total requests | 20 |
+All sequential requests completed successfully.
 
-| Successful requests | 20 |
+---
 
-| Failed requests | 0 |
+## 5. Concurrent Load Testing Results
 
-| Average response time | 99.484 ms |
+| Workload | Requests | Successful | Average Response Time | Error Rate |
+|---|---:|---:|---:|---:|
+| Initial Concurrent Load | 20 | 20 | 1358.756 ms | 0% |
+| Medium Load | 40 | 40 | 790.612 ms | 0% |
+| High Load | 100 | 100 | 374.319 ms | 0% |
+All tested workloads completed without observed request failures.
 
-| Minimum response time | 64.37 ms |
+The tests used PowerShell background jobs. Process initialization and scheduling overhead may influence measured response times.
 
-| Maximum response time | 188.28 ms |
+The results should not be interpreted as a controlled server-side latency scaling curve.
 
-| Error rate | 0% |
+---
 
-All 20 baseline requests completed successfully.
+## 6. Throughput Testing Results
 
-These results establish the initial low-demand reference point for subsequent load tests.
+The background-job throughput test executed 100 requests per configuration.
 
-### Test 2 — Concurrent Request Load
+| Background Jobs | Successful Requests | Duration | Throughput |
+|---|---:|---:|---:|
+| 1 | 100 | 2.544 sec | 39.31 req/sec |
+| 5 | 100 | 7.072 sec | 14.14 req/sec |
+| 20 | 100 | 32.303 sec | 3.10 req/sec |
 
-**Script:** `scripts/low-load.ps1`
+All requests succeeded.
 
-**Purpose:** Evaluate how the application handles overlapping HTTP requests.
+Measured throughput decreased as background-job concurrency increased.
 
-**Workload:**
+PowerShell background-job startup and scheduling overhead are potential contributors to this behavior.
 
-- 20 HTTP GET requests
+---
 
-- 20 PowerShell background jobs
+## 7. Lightweight Scalability Baseline
 
-- Requests allowed to overlap
+The lightweight scalability script used asynchronous HTTP requests to reduce background-job overhead.
 
-- Windows PowerShell 5.1-compatible execution
+| Concurrency | Requests | Duration | Throughput |
+|---|---:|---:|---:|
+| 1 | 100 | 0.079 sec | 1266.38 req/sec |
+| 5 | 100 | 0.019 sec | 5155.99 req/sec |
+| 20 | 100 | 0.015 sec | 6631.70 req/sec |
+All 300 requests completed successfully with a 0% error rate.
 
-Run:
+These measurements represent short-duration localhost tests and should not be interpreted as sustained production throughput.
 
-```powershell
+---
 
-.\scripts\low-load.ps1
+## 8. Application Resource Monitoring
 
-```
+Resource measurements were collected before and after a high-load test.
 
-#### Recorded Concurrent-Load Results
-
-| Metric | Result |
-
-|---|---:|
-
-| Background jobs | 20 |
-
-| Total requests | 20 |
-
-| Successful requests | 20 |
-
-| Failed requests | 0 |
-
-| Average response time | 1,358.756 ms |
-
-| Minimum response time | 601.26 ms |
-
-| Maximum response time | 2,004.27 ms |
-
-| Error rate | 0% |
-
-All 20 concurrent-load requests completed successfully.
-
-Average measured response time increased compared with the sequential baseline. However, the PowerShell background-job approach introduces additional client initialization and scheduling overhead.
-
-Therefore, the difference should not be interpreted as server-side processing time alone.
-
-### Running the Scripts
-
-1. Start the Spring Boot application.
-
-2. Confirm that port `8080` is available.
-
-3. Open Windows PowerShell in the project root.
-
-4. Execute the baseline test.
-
-5. Execute the concurrent-load test.
-
-6. Review the printed results and performance summaries.
-
-Commands:
-
-```powershell
-
-.\scripts\baseline.ps1
-
-.\scripts\low-load.ps1
-
-```
-
-If script execution is restricted, the following command can temporarily permit scripts in the current PowerShell session:
-
-```powershell
-
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-
-```
-
-### Measurement Method
-
-Each script uses the .NET `Stopwatch` class to measure elapsed time around an HTTP request.
-
-The scripts record individual request durations and calculate summary statistics.
-
-The baseline script executes requests sequentially.
-
-The concurrent-load script uses PowerShell background jobs to create overlapping requests.
-
-These methods are useful for basic application load testing, but background-job startup overhead and local machine resource contention can affect measured response times.
-
-The current scripts do not independently report aggregate throughput or server CPU and memory utilization. These metrics require additional measurement during the remaining scalability analysis.
-
-### Current Performance Comparison
-
-| Metric | Sequential Baseline | Concurrent Load |
-
+| Resource | Before | After |
 |---|---:|---:|
+| Cumulative CPU Time | 24.594 sec | 24.922 sec |
+| Working Set Memory | 93.53 MB | 95.54 MB |
+| Thread Count | 53 | 53 |
 
-| Total requests | 20 | 20 |
+Observed differences:
 
-| Average response time | 99.484 ms | 1,358.756 ms |
+- CPU time increased by 0.328 seconds.
+- Memory increased by approximately 2.01 MB.
+- Thread count remained unchanged.
 
-| Minimum response time | 64.37 ms | 601.26 ms |
+The accompanying high-load test completed 100 requests successfully with an average response time of 289.145 ms.
 
-| Maximum response time | 188.28 ms | 2,004.27 ms |
-
-| Failed requests | 0 | 0 |
-
-| Error rate | 0% | 0% |
-
-Both workloads completed without observed HTTP request failures.
-
-The concurrent test showed higher client-observed response times, but additional controlled workload levels are needed before drawing conclusions about application scalability.
+These measurements represent before-and-after snapshots rather than peak resource utilization.
 
 ---
 
-## Automated Testing
+## 9. Performance Limitation Investigation
 
-The project includes JUnit tests covering reservation service behavior.
+The original `ReservationService.getAvailableSlots()` implementation checked each appointment slot against the reservations collection.
 
-The existing tests verify scenarios such as:
+For every available slot candidate, the service scanned existing reservations to determine whether the slot was reserved.
 
-- Available appointment retrieval
+The original approach had approximate time complexity:
 
-- Successful reservation creation
+O(S * R)
 
-- Invalid appointment handling
+Where:
 
-- Duplicate booking prevention
+- S = Number of appointment slots
 
-- Reservation cancellation
+- R = Number of reservations
 
-- Invalid customer input
+This repeated scanning could become increasingly expensive as the number of appointment slots and reservations grows.
 
-- Concurrent booking protection
+The method also used a synchronization lock to protect shared reservation data.
 
-- Reservation persistence behavior
+The nested collection search was identified as a potential algorithmic limitation, not a conclusively demonstrated cause of the observed throughput behavior.
 
-Run the tests using:
+---
+
+## 10. Performance Optimization
+
+The `ReservationService.getAvailableSlots()` method was optimized to build a set of reserved appointment identifiers once per request.
+
+The service then uses set membership checks to filter available appointment slots.
+
+The optimized approach has approximate expected time complexity:
+
+O(S + R)
+
+The modification:
+
+- Eliminates repeated scans of the reservations collection.
+- Uses a HashSet-backed lookup through Java collectors.
+- Preserves the existing synchronization lock.
+- Maintains the original REST endpoint.
+- Preserves the expected response structure.
+- Does not change reservation creation behavior.
+
+The synchronization lock was retained to protect the shared HashMap-based reservation state.
+
+Git version history preserves the original and modified implementations.
+
+---
+
+## 11. Post-Optimization Performance Results
+
+The lightweight scalability test was repeated after implementing the optimization.
+
+| Concurrency | Before Optimization | After Optimization |
+|---|---:|---:|
+| 1 | 1266.38 req/sec | 313.21 req/sec |
+| 5 | 5155.99 req/sec | 722.37 req/sec |
+| 20 | 6631.70 req/sec | 850.72 req/sec |
+
+All 300 post-optimization requests succeeded.
+
+The initial post-optimization results showed lower throughput at all three concurrency levels.
+
+The optimization therefore did not demonstrate a measured throughput improvement in this test.
+
+Because the benchmark durations were very short, additional measurements were collected.
+
+---
+
+## 12. Repeated Post-Optimization Testing
+
+Three additional scalability tests were executed.
+
+Each test included 100 requests at concurrency levels of 1, 5, and 20.
+
+| Concurrency | Repeat 1 | Repeat 2 | Repeat 3 | Average |
+|---|---:|---:|---:|---:|
+| 1 | 950.02 | 382.83 | 393.19 | 575.35 |
+| 5 | 2405.31 | 1293.07 | 1291.15 | 1663.18 |
+| 20 | 937.02 | 1513.78 | 1453.94 | 1301.58 |
+
+All throughput values are requests per second.
+
+Summary:
+
+- Total Requests: 900
+- Successful Requests: 900
+- Failed Requests: 0
+- Error Rate: 0%
+
+The results varied considerably between repetitions.
+
+The short benchmark duration, JVM warm-up, operating system scheduling, and local system conditions may have influenced the measurements.
+
+Although the optimization reduced the theoretical complexity of appointment filtering, the tests did not establish an improvement in measured throughput.
+
+The results also do not establish that the code modification alone caused the lower throughput.
+
+---
+
+## 13. Final Concurrent Correctness Validation
+
+After implementing the optimization, the concurrent correctness validation script was executed again.
+
+| Metric | Result |
+|---|---:|
+| Background Jobs | 20 |
+| Requests per Job | 2 |
+| Total Requests | 40 |
+| Valid Responses | 40 |
+| Invalid Responses | 0 |
+| Validation Error Rate | 0% |
+
+All 40 requests passed the configured response validation checks.
+
+This verifies expected appointment retrieval behavior under the tested concurrent workload.
+
+Because this test uses read-only GET requests, it does not independently establish correctness during simultaneous reservation creation.
+
+---
+
+## 14. Final Automated Testing
+
+The final verification command was:
 
 ```powershell
 
@@ -390,22 +404,63 @@ Run the tests using:
 
 ```
 
-Automated testing helps verify that performance-related changes do not introduce functional regressions.
+Results:
 
+```text
 
-## Version Control
+Tests run: 13, Failures: 0, Errors: 0, Skipped: 0
 
-Git and GitHub are used to track application changes, performance scripts, and documentation.
-
-Recommended commit for the initial testing scripts:
-
-```powershell
-
-git add scripts README.md
-
-git commit -m "Add reproducible baseline and concurrent load test scripts"
-
-git push origin main
+BUILD SUCCESS
 
 ```
 
+The application was then started using:
+
+```powershell
+
+.\mvnw.cmd spring-boot:run
+
+```
+
+Spring Boot started successfully, and embedded Tomcat initialized on port 8080.
+
+A final HTTP GET request to `/api/appointments` returned all four expected appointment slots.
+
+These results confirm that the optimized implementation continued to pass the existing automated tests and function correctly for the verified endpoint.
+
+---
+
+## 15. Findings and Limitations
+
+The testing produced several findings:
+
+1. All measured sequential and concurrent workloads completed without observed HTTP request failures.
+2. PowerShell background-job overhead influenced throughput measurements.
+3. Lightweight asynchronous tests provided higher throughput measurements but used very short execution durations.
+4. The original availability retrieval method contained a potential algorithmic scalability limitation.
+5. The optimization reduced repeated reservation searches while preserving synchronization.
+6. Post-optimization testing did not establish a measurable throughput improvement.
+7. Repeated testing revealed substantial measurement variability.
+8. All 13 automated tests passed after the optimization.
+9. Final concurrent validation confirmed 40 valid responses with zero failures.
+
+The tests were conducted locally using a small appointment dataset.
+
+Longer-duration tests, larger reservation datasets, controlled JVM warm-up, and repeated measurements of both implementation versions would be required for a stronger performance assessment.
+
+---
+
+## 166. Conclusion
+
+Assignment 7 evaluated the Concurrent Reservation Service through baseline testing, progressively increasing concurrent workloads, throughput analysis, resource monitoring, performance optimization, and correctness verification.
+
+The service completed the measured HTTP workloads without observed request failures.
+
+A potential algorithmic limitation was identified in the appointment availability retrieval logic and addressed through set-based filtering while preserving synchronization.
+
+Although the modification improved the theoretical efficiency of availability filtering, the measured results did not establish a throughput improvement.
+
+Repeated testing showed that short-duration localhost benchmarks can produce variable results.
+
+Final automated and functional verification passed, demonstrating that the optimized application preserved the behavior covered by the existing tests and validation activities.
+ 

@@ -7,12 +7,8 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ReservationService {
@@ -55,11 +51,12 @@ public class ReservationService {
 
     public List<AppointmentSlot> getAvailableSlots() {
         synchronized (bookingLock) {
+            Set<String> reservedSlotIds = reservations.values()
+                    .stream()
+                    .map(Reservation::appointmentSlotId)
+                    .collect(Collectors.toSet());
             return slots.values().stream()
-                    .filter(slot -> reservations.values().stream()
-                            .noneMatch(reservation ->
-                                    reservation.appointmentSlotId()
-                                            .equals(slot.id())))
+                    .filter(slot -> !reservedSlotIds.contains(slot.id()))
                     .sorted(Comparator.comparing(
                             AppointmentSlot::startTime))
                     .toList();
